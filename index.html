@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="es-CO">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Calculadora del recibo de agua · Residencial, Odontología y Restaurante</title>
+<meta name="description" content="Distribuye el recibo de acueducto, alcantarillado, aseo e iluminación entre residencial, odontología y restaurante según las reglas acordadas." />
+<meta name="theme-color" content="#0e7490" />
+<link rel="icon" href="favicon.svg" type="image/svg+xml" />
+<link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+<header class="cabecera">
+  <div class="contenedor">
+    <h1><span aria-hidden="true">💧</span> Calculadora del recibo de agua</h1>
+    <p class="lema">Reparto entre <strong>residencial</strong>, <strong>odontología</strong> y <strong>restaurante</strong> según las reglas acordadas.</p>
+    <p class="linea-base-chip" id="chipLineaBase">Línea base Julio 2026 · cargando…</p>
+  </div>
+</header>
+
+<main class="contenedor">
+
+  <!-- ================= Modo de cálculo ================= -->
+  <nav class="pestanas" role="tablist" aria-label="Modo de cálculo">
+    <button type="button" role="tab" id="tabTotal" aria-controls="panelTotal" aria-selected="true" class="pestana activa" data-modo="total">
+      <span class="pestana-num">1</span>
+      <span class="pestana-texto">
+        <strong>Sólo el total</strong>
+        <small>Ingreso el valor total y se reparte con la proporción de la línea base</small>
+      </span>
+    </button>
+    <button type="button" role="tab" id="tabDetalle" aria-controls="panelDetalle" aria-selected="false" class="pestana" data-modo="detalle">
+      <span class="pestana-num">2</span>
+      <span class="pestana-texto">
+        <strong>Factura detallada</strong>
+        <small>Ingreso concepto por concepto — todos los campos son opcionales</small>
+      </span>
+    </button>
+  </nav>
+
+  <!-- ================= Panel modo total ================= -->
+  <section class="tarjeta" id="panelTotal" role="tabpanel" aria-labelledby="tabTotal">
+    <h2>Valor total de la factura</h2>
+    <p class="ayuda">Se desglosa con el mismo peso que cada concepto tenía en la línea base y luego se aplican las reglas del acuerdo.</p>
+    <div class="rejilla">
+      <label class="campo campo-destacado">
+        <span>Total de la factura</span>
+        <input type="text" inputmode="numeric" id="totalFactura" placeholder="326.135" autocomplete="off" />
+        <small>Si lo deja vacío se usa $326.135, el total de la línea base.</small>
+      </label>
+    </div>
+
+    <details class="desplegable">
+      <summary>Gastos exclusivos de una unidad incluidos en ese total <span class="opcional">opcional</span></summary>
+      <p class="ayuda">Multas, intereses, acuerdos de pago o reparaciones de una sola parte. Se descuentan antes de prorratear (numeral 8).</p>
+      <div class="rejilla rejilla-3">
+        <label class="campo"><span>🏠 Residencial</span><input type="text" inputmode="numeric" id="tPartResidencial" placeholder="0" autocomplete="off" /></label>
+        <label class="campo"><span>🦷 Odontología</span><input type="text" inputmode="numeric" id="tPartOdontologia" placeholder="0" autocomplete="off" /></label>
+        <label class="campo"><span>🍽️ Restaurante</span><input type="text" inputmode="numeric" id="tPartRestaurante" placeholder="0" autocomplete="off" /></label>
+      </div>
+    </details>
+  </section>
+
+  <!-- ================= Panel modo detallado ================= -->
+  <section class="tarjeta oculto" id="panelDetalle" role="tabpanel" aria-labelledby="tabDetalle">
+    <h2>Conceptos de la factura</h2>
+    <p class="ayuda">Todos los campos son opcionales: si deja uno vacío se usa el valor de la línea base de Julio 2026.</p>
+
+    <h3 class="subtitulo">Acueducto y alcantarillado</h3>
+    <div class="rejilla rejilla-2">
+      <label class="campo"><span>Consumo en acueducto</span><input type="text" inputmode="numeric" id="acueducto" placeholder="84.924" autocomplete="off" /><small>Base: $84.924</small></label>
+      <label class="campo"><span>Consumo en alcantarillado</span><input type="text" inputmode="numeric" id="alcantarillado" placeholder="50.181" autocomplete="off" /><small>Base: $50.181</small></label>
+    </div>
+
+    <h3 class="subtitulo">Aseo</h3>
+    <div class="rejilla rejilla-2">
+      <label class="campo"><span>Aseo residencial</span><input type="text" inputmode="numeric" id="aseoResidencial" placeholder="44.296" autocomplete="off" /><small>Base: $44.296 — lo asume la unidad residencial</small></label>
+      <label class="campo"><span>Aseo comercial</span><input type="text" inputmode="numeric" id="aseoComercial" placeholder="131.734" autocomplete="off" /><small>Base: $131.734 — se reparte 35% / 65%</small></label>
+    </div>
+
+    <h3 class="subtitulo">Conceptos comunes</h3>
+    <div class="rejilla rejilla-2">
+      <label class="campo"><span>Iluminación</span><input type="text" inputmode="numeric" id="iluminacion" placeholder="15.000" autocomplete="off" /><small>Base: $15.000</small></label>
+      <label class="campo"><span>Otros conceptos comunes</span><input type="text" inputmode="numeric" id="otrosComunes" placeholder="0" autocomplete="off" /><small>Se dividen entre tres</small></label>
+    </div>
+
+    <h3 class="subtitulo">Otros conceptos particulares <span class="opcional">numeral 8</span></h3>
+    <p class="ayuda">Multas, intereses, acuerdos de pago o reparaciones que genere una sola unidad.</p>
+    <div class="rejilla rejilla-3">
+      <label class="campo"><span>🏠 Residencial</span><input type="text" inputmode="numeric" id="dPartResidencial" placeholder="0" autocomplete="off" /></label>
+      <label class="campo"><span>🦷 Odontología</span><input type="text" inputmode="numeric" id="dPartOdontologia" placeholder="0" autocomplete="off" /></label>
+      <label class="campo"><span>🍽️ Restaurante</span><input type="text" inputmode="numeric" id="dPartRestaurante" placeholder="0" autocomplete="off" /></label>
+    </div>
+  </section>
+
+  <!-- ================= Configuración ================= -->
+  <details class="tarjeta desplegable-config" id="bloqueConfig">
+    <summary>
+      <span class="resumen-titulo">Configuración de reglas y tarifas</span>
+      <span class="ayuda">Porcentajes, evidencia disponible y ajuste anual del valor unitario</span>
+    </summary>
+
+    <h3 class="subtitulo">Condiciones del período</h3>
+    <div class="rejilla rejilla-2">
+      <label class="casilla">
+        <input type="checkbox" id="consumoHabitualDemostrado" checked />
+        <span><strong>Residencial y odontología mantienen su consumo habitual</strong><small>Condición del numeral 2 para que el incremento de acueducto lo asuma el restaurante.</small></span>
+      </label>
+      <label class="casilla">
+        <input type="checkbox" id="incrementoAseoAlRestaurante" />
+        <span><strong>Hay evidencia de que el aumento de aseo viene del restaurante</strong><small>Numeral 5: el incremento sobre el histórico comercial lo asume el restaurante.</small></span>
+      </label>
+    </div>
+
+    <h3 class="subtitulo">Porcentajes</h3>
+    <div class="rejilla rejilla-3">
+      <label class="campo"><span>Margen de tolerancia (%)</span><input type="text" inputmode="decimal" id="toleranciaPct" placeholder="5" autocomplete="off" /><small>Hasta qué variación se considera consumo igual</small></label>
+      <label class="campo"><span>Restaurante en acueducto (%)</span><input type="text" inputmode="decimal" id="pctRestauranteAA" placeholder="33,33" autocomplete="off" /><small>Ajuste progresivo del numeral 3</small></label>
+      <label class="campo"><span>Odontología en aseo comercial (%)</span><input type="text" inputmode="decimal" id="pctOdontologiaAseo" placeholder="35" autocomplete="off" /><small>El restaurante asume el resto</small></label>
+    </div>
+
+    <h3 class="subtitulo">Valor unitario para el ajuste anual <span class="opcional">escenario C</span></h3>
+    <p class="ayuda">Si la tarifa subió, la línea base se actualiza con ese factor y el mayor valor por tarifa no se le carga al restaurante. Deje las casillas en blanco si no aplica.</p>
+    <div class="tabla-envoltura">
+      <table class="tabla-tarifas">
+        <thead><tr><th>Concepto</th><th>Valor unitario en la línea base</th><th>Valor unitario actual</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Acueducto ($/m³)</th>
+            <td><input type="text" inputmode="decimal" id="tarAcuBase" placeholder="—" autocomplete="off" /></td>
+            <td><input type="text" inputmode="decimal" id="tarAcuActual" placeholder="—" autocomplete="off" /></td></tr>
+          <tr><th scope="row">Alcantarillado ($/m³)</th>
+            <td><input type="text" inputmode="decimal" id="tarAlcBase" placeholder="—" autocomplete="off" /></td>
+            <td><input type="text" inputmode="decimal" id="tarAlcActual" placeholder="—" autocomplete="off" /></td></tr>
+          <tr><th scope="row">Aseo comercial ($/tonelada)</th>
+            <td><input type="text" inputmode="decimal" id="tarAseoBase" placeholder="—" autocomplete="off" /></td>
+            <td><input type="text" inputmode="decimal" id="tarAseoActual" placeholder="—" autocomplete="off" /></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="acciones">
+      <button type="button" class="boton secundario" id="btnGuardarConfig">Guardar configuración</button>
+      <button type="button" class="boton fantasma" id="btnRestablecer">Restablecer valores por defecto</button>
+      <span class="aviso-guardado" id="avisoGuardado" role="status"></span>
+    </div>
+  </details>
+
+  <div class="acciones acciones-principales">
+    <button type="button" class="boton primario" id="btnCalcular">Calcular distribución</button>
+    <button type="button" class="boton fantasma" id="btnCopiar">Copiar resumen</button>
+    <button type="button" class="boton fantasma" id="btnImprimir">Imprimir / PDF</button>
+    <span class="aviso-guardado" id="avisoCopia" role="status"></span>
+  </div>
+
+  <!-- ================= Resultados ================= -->
+  <section id="resultados" aria-live="polite"></section>
+
+  <!-- ================= Reglas ================= -->
+  <details class="tarjeta desplegable-config" id="bloqueReglas">
+    <summary>
+      <span class="resumen-titulo">Reglas del acuerdo</span>
+      <span class="ayuda">Los criterios que aplica esta calculadora</span>
+    </summary>
+    <ol class="reglas">
+      <li><strong>Línea base.</strong> Referencia: factura de Julio 2026 de residencial + odontología, antes del inicio del restaurante.</li>
+      <li><strong>Acueducto y alcantarillado.</strong> Mientras el consumo se mantenga igual o similar a la línea base, se divide entre las tres partes. El restaurante paga su parte aunque no haya generado incremento.</li>
+      <li><strong>Si aumenta el consumo.</strong> El incremento sobre la línea base se atribuye al restaurante, siempre que residencial y odontología demuestren que mantienen su consumo habitual.</li>
+      <li><strong>Ajuste progresivo.</strong> Si el consumo sigue subiendo y se relaciona con la operación del restaurante, su participación aumenta gradualmente: 33,33% → 40% → 50% → 60% → 65% → 70%…</li>
+      <li><strong>Si el consumo baja.</strong> El reparto sigue siendo proporcional. El restaurante no tiene valor mínimo fijo.</li>
+      <li><strong>Aseo.</strong> El componente residencial lo paga residencial. El comercial se reparte 65% restaurante / 35% odontología, y el incremento demostrable sobre el histórico lo asume el restaurante.</li>
+      <li><strong>Iluminación y comunes.</strong> Los conceptos que benefician por igual a las tres partes se dividen en tercios.</li>
+      <li><strong>Gastos propios.</strong> Multas, intereses, acuerdos de pago o reparaciones de una parte las asume esa parte.</li>
+      <li><strong>Revisión semestral.</strong> Cada 6 meses, a petición de cualquiera de las partes, se revisan las facturas para decidir si los porcentajes siguen siendo justos.</li>
+      <li><strong>Principio general.</strong> Cada parte paga por el consumo que le corresponde y quien genere un incremento demostrable lo asume. La distribución no se modifica por percepción sino por el comportamiento de las facturas.</li>
+    </ol>
+  </details>
+
+</main>
+
+<footer class="pie">
+  <div class="contenedor">
+    <p>Los valores se calculan en pesos enteros y la suma de las tres partes siempre coincide con el total de la factura.</p>
+  </div>
+</footer>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

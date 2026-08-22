@@ -1,0 +1,10 @@
+{
+  "name": "calculadora-recibo-agua",
+  "version": "1.0.0",
+  "description": "Calculadora de distribución del recibo de agua entre residencial, odontología y restaurante",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "test": "node test/motor.test.js"
+  }
+}
