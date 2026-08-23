@@ -10,6 +10,13 @@ const FMT_MONEDA = new Intl.NumberFormat('es-CO', {
   maximumFractionDigits: 0,
 });
 
+const FMT_MONEDA_DEC = new Intl.NumberFormat('es-CO', {
+  style: 'currency',
+  currency: 'COP',
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
 const FMT_NUMERO = new Intl.NumberFormat('es-CO', {
   minimumFractionDigits: 0,
   maximumFractionDigits: 0,
@@ -20,9 +27,22 @@ export function pesos(valor) {
   return FMT_MONEDA.format(Math.round(Number(valor) || 0));
 }
 
+/** $1.234,57 — para tarifas de referencia y precios unitarios */
+export function pesosDecimal(valor) {
+  return FMT_MONEDA_DEC.format(Number(valor) || 0);
+}
+
 /** 1.234.567 (sin símbolo) */
 export function numero(valor) {
   return FMT_NUMERO.format(Math.round(Number(valor) || 0));
+}
+
+/** 1.234,57 (sin símbolo, con decimales) */
+export function numeroDecimal(valor, decimales = 2) {
+  return new Intl.NumberFormat('es-CO', {
+    minimumFractionDigits: decimales,
+    maximumFractionDigits: decimales,
+  }).format(Number(valor) || 0);
 }
 
 /** 33,33 % */

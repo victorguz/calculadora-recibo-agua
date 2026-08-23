@@ -4,17 +4,24 @@ Aplicación estática (HTML + JavaScript, sin dependencias) que reparte el recib
 públicos entre tres unidades — **residencial**, **odontología** y **restaurante** — aplicando
 las reglas del acuerdo de distribución.
 
-## Modos de uso
+## Cómo funciona
 
-1. **Sólo el total.** Se ingresa el valor total de la factura y se desglosa con el mismo peso
-   que cada concepto tenía en la línea base de Julio 2026. Sobre ese desglose se aplican las
-   reglas normales, de modo que los aumentos se asignan según el acuerdo y no sólo en proporción.
-2. **Factura detallada.** Se ingresa concepto por concepto: acueducto, alcantarillado, aseo
-   residencial, aseo comercial, otros conceptos comunes y otros conceptos particulares.
-   Todos los campos son opcionales; los vacíos toman el valor de la línea base.
+Un solo formulario. Basta con digitar el **total de la factura**: el aseo y la iluminación
+prácticamente no cambian mes a mes, así que traen el valor de la línea base, y **la diferencia
+se atribuye al consumo de acueducto y alcantarillado**, que es lo que realmente varía. Ese
+incremento lo asume el restaurante.
 
-En ambos modos el resultado muestra cuánto le corresponde a cada parte, el desglose por
-concepto y **qué caso del acuerdo se presentó**, con la explicación de por qué se cumplió esa condición.
+Si algún concepto llegó distinto, se despliega **Conceptos de la factura** y se ajusta. Todos los
+campos son opcionales y traen por defecto el valor de la línea base de Julio 2026:
+
+- Aseo residencial y aseo comercial
+- Iluminación y otros conceptos comunes
+- Acueducto y alcantarillado (se calculan como el residuo del total; para digitarlos a mano, se
+  deja vacío el total y la factura pasa a ser la suma de los conceptos)
+- Otros conceptos particulares por unidad — multas, intereses de mora, acuerdos de pago
+
+**No hay margen de tolerancia:** cualquier peso por encima de la línea base es incremento y lo
+asume el restaurante, siempre que residencial y odontología mantengan su consumo habitual.
 
 ## Línea base (Julio 2026)
 
@@ -27,13 +34,32 @@ concepto y **qué caso del acuerdo se presentó**, con la explicación de por qu
 | Iluminación | $15.000 |
 | **Total** | **$326.135** |
 
+El desglose completo de esa factura — concepto por concepto, con tarifa de referencia, factor de
+subsidio/aporte, precio y cantidad — está anotado en `js/config.js` (`LINEA_BASE_DETALLE`) y se
+puede consultar en la app bajo *Detalle de la línea base*. El consumo de ese período fue de 16 m³.
+
+> **Diferencia pendiente de definir.** Sumando los conceptos de la factura, el aseo se separa en
+> **$49.020 residencial** y **$127.010 comercial**. El acuerdo escrito usa $44.296 y $131.734.
+> La calculadora aplica por defecto los valores del acuerdo por ser lo pactado; para usar el
+> desglose real basta cambiarlos en los conceptos de la factura.
+
+### Valor unitario de referencia
+
+Precargado en el ajuste anual (escenario C):
+
+| Concepto | Valor unitario en la línea base |
+|---|---:|
+| Acueducto | $5.275,23 /m³ (CMI 3.071,70 + CMO 2.130,73 + impuestos 72,80) |
+| Alcantarillado | $3.048,17 /m³ (CMI 2.283,32 + CMO 655,32 + impuestos 109,53) |
+| Aseo | $136.020,43 /tonelada de recolección y transporte |
+
 ## Casos que reconoce la calculadora
 
 | Código | Concepto | Cuándo se presenta |
-|---|---|---|
-| A | Acueducto + alcantarillado | El consumo se mantiene dentro del margen de tolerancia: se divide en tercios. |
-| A-baja | Acueducto + alcantarillado | El consumo bajó: reparto proporcional, sin mínimo fijo para el restaurante. |
-| B | Acueducto + alcantarillado | El consumo aumentó y residencial y odontología mantienen su consumo habitual: el incremento lo asume el restaurante. |
+|---|---|---:|
+| A | Acueducto + alcantarillado | El consumo coincide con la línea base: se divide en tercios. |
+| A-baja | Acueducto + alcantarillado | El consumo bajó: reparto en tercios, sin mínimo fijo para el restaurante. |
+| B | Acueducto + alcantarillado | El consumo aumentó y residencial y odontología mantienen su consumo habitual: todo el incremento lo asume el restaurante. |
 | B-sin-evidencia | Acueducto + alcantarillado | El consumo aumentó pero no se acreditó la condición anterior: el total se divide en tercios. |
 | C | Acueducto, alcantarillado y aseo | La tarifa unitaria subió: la línea base se indexa y el mayor valor por tarifa se reparte entre las tres partes. |
 | D | Acueducto + alcantarillado | La revisión semestral elevó la participación del restaurante por encima del 33,33%. |
@@ -43,18 +69,28 @@ concepto y **qué caso del acuerdo se presentó**, con la explicación de por qu
 | Comunes | Iluminación y comunes | Se dividen en partes iguales. |
 | Particulares | Otros conceptos particulares | Multas, intereses o acuerdos de pago los asume quien los generó. |
 
+## Dónde se guarda la configuración
+
+El botón **Guardar configuración** la almacena en el `localStorage` del navegador: queda en ese
+equipo y en ese navegador, no se sube a ningún servidor ni la ven las otras partes.
+
+Para que las tres unidades trabajen con los mismos parámetros está **Copiar enlace con estos
+datos**: codifica los valores del formulario y de la configuración en la URL, de modo que quien
+la abra vea exactamente el mismo cálculo.
+
 ## Estructura
 
 ```
 index.html            página única
 css/styles.css         estilos (modo claro y oscuro)
 js/
-  config.js            línea base, valores por defecto y persistencia
+  config.js            línea base, detalle de la factura, defaults y persistencia
   formato.js           formateo y lectura de pesos colombianos
   redondeo.js          reparto en pesos enteros sin descuadres
-  proporcional.js      desglose del total según la línea base (modo 1)
+  desglose.js          arma la factura desde el total o desde los conceptos
+  enlace.js            comparte datos y configuración por URL
   motor.js             orquestación de las reglas
-  ui.js                render del resultado
+  ui.js                render del resultado y del detalle de la línea base
   main.js              arranque y eventos
   reglas/
     acueducto.js       numerales 2 y 3
@@ -81,10 +117,11 @@ Y abrir <http://localhost:4173>.
 node test/motor.test.js
 ```
 
-Las pruebas reproducen los ejemplos numéricos del acuerdo: $135.105 en tercios, la factura de
-$200.000 con incremento al restaurante, el aseo de $176.030 en 44.296 / 46.107 / 85.627 y el
-aseo de $220.000 en sus dos variantes.
+Reproducen los ejemplos numéricos del acuerdo: $135.105 en tercios, la factura de $200.000 con
+incremento al restaurante, el aseo de $176.030 en 44.296 / 46.107 / 85.627, el aseo de $220.000 en
+sus dos variantes, y el comportamiento del formulario unificado (el aumento del total cae en
+consumo y no en aseo).
 
 ## Despliegue
 
-Sitio estático desplegado en AWS Amplify Hosting.
+Sitio estático en AWS Amplify Hosting (región us-east-2). Cada push a `main` redespliega solo.

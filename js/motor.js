@@ -8,7 +8,7 @@ import { distribuirAcueducto } from './reglas/acueducto.js';
 import { distribuirAseo } from './reglas/aseo.js';
 import { distribuirComunes } from './reglas/comunes.js';
 import { distribuirParticulares } from './reglas/particulares.js';
-import { desglosarPorLineaBase } from './proporcional.js';
+import { construirFactura } from './desglose.js';
 
 const VACIO = { residencial: 0, odontologia: 0, restaurante: 0 };
 
@@ -62,8 +62,6 @@ export function calcular(facturaEntrada, configEntrada) {
     b.escenarios.map((e) => ({ ...e, concepto: b.concepto })),
   );
 
-  const comparativo = compararConLineaBase(bloques, totales, totalFactura);
-
   return {
     config,
     factura,
@@ -76,20 +74,20 @@ export function calcular(facturaEntrada, configEntrada) {
       restaurante: totalFactura ? (totales.restaurante / totalFactura) * 100 : 0,
     },
     escenarios,
-    comparativo,
+    comparativo: compararConLineaBase(bloques, totales, totalFactura),
     cuadra: totales.residencial + totales.odontologia + totales.restaurante === totalFactura,
   };
 }
 
 /**
- * Modo 1: se conoce sólo el total de la factura.
- * Se desglosa con los pesos de la línea base y luego se aplican las reglas.
+ * Punto de entrada único del formulario: recibe lo que el usuario diligenció
+ * (total y/o conceptos), arma la factura y aplica las reglas.
  */
-export function calcularDesdeTotal(totalFactura, configEntrada, particulares = {}) {
+export function calcularDesdeFormulario(entrada, configEntrada) {
   const config = configConDefaults(configEntrada);
-  const desglose = desglosarPorLineaBase(totalFactura, config, particulares);
+  const desglose = construirFactura(entrada, config);
   const resultado = calcular(desglose.factura, config);
-  return { ...resultado, desglose, modo: 'total' };
+  return { ...resultado, desglose };
 }
 
 /** Comparación contra lo que se pagaba antes del restaurante. */
@@ -97,8 +95,8 @@ function compararConLineaBase(bloques, totales, totalFactura) {
   const aa = bloques.find((b) => b.id === 'acueducto');
   const aseo = bloques.find((b) => b.id === 'aseo');
 
-  // Antes del restaurante: acueducto y alcantarillado se dividían entre dos,
-  // el aseo residencial era de residencial y el comercial de odontología.
+  // Antes del restaurante: acueducto, alcantarillado e iluminación se dividían
+  // entre dos; el aseo residencial era de residencial y el comercial de odontología.
   const antes = {
     residencial: Math.round(BASE_AA / 2 + LINEA_BASE.aseoResidencial + LINEA_BASE.iluminacion / 2),
     odontologia: Math.round(BASE_AA / 2 + LINEA_BASE.aseoComercial + LINEA_BASE.iluminacion / 2),

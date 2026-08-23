@@ -114,57 +114,9 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-/* ---------------- Pestañas ---------------- */
-
-.pestanas {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: .75rem;
-  margin: -1.25rem 0 1.25rem;
-}
-
-@media (max-width: 640px) {
-  .pestanas { grid-template-columns: 1fr; }
-}
-
-.pestana {
-  display: flex;
-  gap: .75rem;
-  align-items: flex-start;
-  text-align: left;
-  padding: .95rem 1rem;
-  border: 1px solid var(--borde);
-  border-radius: var(--radio);
-  background: var(--fondo-tarjeta);
-  color: var(--texto);
-  cursor: pointer;
-  box-shadow: var(--sombra);
-  font: inherit;
-  transition: border-color .15s, transform .15s;
-}
-
-.pestana:hover { border-color: var(--borde-fuerte); }
-.pestana.activa { border-color: var(--acento); box-shadow: 0 0 0 2px var(--acento-claro), var(--sombra); }
-
-.pestana-num {
-  flex: none;
-  width: 1.7rem;
-  height: 1.7rem;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  background: var(--fondo-suave);
-  color: var(--texto-suave);
-  font-weight: 700;
-  font-size: .85rem;
-}
-
-.pestana.activa .pestana-num { background: var(--acento); color: #fff; }
-.pestana-texto { display: block; }
-.pestana strong { display: block; font-size: .98rem; }
-.pestana small { display: block; color: var(--texto-suave); font-size: .8rem; line-height: 1.35; }
-
 /* ---------------- Tarjetas y formularios ---------------- */
+
+#panelFactura { margin-top: -1.25rem; }
 
 .tarjeta {
   background: var(--fondo-tarjeta);
@@ -419,6 +371,66 @@ input[type="text"]:focus {
   margin-bottom: 1rem;
 }
 
+
+/* ---------------- Consumo derivado y notas ---------------- */
+
+.resumen-derivado {
+  margin-top: .85rem;
+  padding: .65rem .85rem;
+  border-radius: var(--radio-chico);
+  background: var(--acento-claro);
+  border: 1px solid var(--acento);
+  font-size: .88rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.resumen-titulo-chico { font-weight: 650; font-size: .95rem; }
+
+input[type="text"].derivado {
+  background: var(--fondo-suave);
+  color: var(--texto-suave);
+  border-style: dashed;
+  cursor: not-allowed;
+}
+
+.fila-derivada td { font-weight: 650; background: var(--fondo-suave); }
+
+.pie-tabla { margin: .7rem 0 0; }
+
+.nota-almacen {
+  margin-top: 1.1rem;
+  padding: .85rem 1rem;
+  border-radius: var(--radio-chico);
+  background: var(--fondo-suave);
+  border-left: 4px solid var(--acento);
+  font-size: .85rem;
+  color: var(--texto-suave);
+}
+
+.nota-almacen strong { color: var(--texto); display: block; margin-bottom: .2rem; }
+.nota-almacen em { font-style: normal; font-weight: 600; color: var(--texto); }
+
+.nota-discrepancia { border-left-color: var(--alerta); background: var(--alerta-suave); }
+.nota-discrepancia strong { color: var(--alerta); }
+
+.resumen-base {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: .6rem;
+  margin: 1rem 0 .5rem;
+}
+
+.resumen-base > div {
+  padding: .6rem .75rem;
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-chico);
+  background: var(--fondo);
+}
+
+.resumen-base span { display: block; font-size: .76rem; color: var(--texto-suave); }
+.resumen-base strong { font-size: 1.05rem; font-variant-numeric: tabular-nums; }
+.resumen-base .destacado { background: var(--acento-claro); border-color: var(--acento); }
+
 /* ---------------- Reglas y pie ---------------- */
 
 .reglas { margin: .5rem 0 0; padding-left: 1.35rem; font-size: .89rem; }
@@ -435,7 +447,7 @@ input[type="text"]:focus {
 /* ---------------- Impresión ---------------- */
 
 @media print {
-  .pestanas, .acciones, .desplegable-config, .pie, #panelTotal, #panelDetalle { display: none !important; }
+  .acciones, .desplegable-config, .pie, #panelFactura { display: none !important; }
   body { background: #fff; }
   .cabecera { background: #fff; color: #000; padding: 0 0 1rem; }
   .linea-base-chip { background: #eee; color: #000; }
