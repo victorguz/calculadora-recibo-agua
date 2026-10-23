@@ -2,20 +2,23 @@
  * desglose.js
  * Arma el desglose de la factura a partir de lo que haya diligenciado el usuario.
  *
- * Aseo e iluminación son valores estables mes a mes, así que traen el valor de la
- * línea base por defecto. Cuando se digita el total de la factura, la diferencia
- * contra esos conceptos fijos se atribuye al consumo de acueducto y alcantarillado,
- * que es lo que realmente varía.
+ * Aseo e iluminación traen por defecto el valor de la factura más reciente, no el
+ * de la línea base: desde octubre de 2026 el aseo cambió de nivel y ya no sirve el
+ * dato de julio. Cuando se digita el total de la factura, la diferencia contra esos
+ * conceptos se atribuye al consumo de acueducto y alcantarillado.
+ *
+ * Ojo: si el aseo del mes llega distinto al sugerido, hay que corregirlo a mano;
+ * de lo contrario la diferencia se le carga al acueducto.
  */
 
-import { LINEA_BASE, factorTarifa } from './config.js';
+import { LINEA_BASE, VALORES_SUGERIDOS, factorTarifa } from './config.js';
 import { repartir } from './redondeo.js';
 
 function positivo(valor) {
   return Math.max(0, Math.round(Number(valor) || 0));
 }
 
-/** Vacío o ausente toma el valor de la línea base; un 0 explícito se respeta. */
+/** Vacío o ausente toma el valor sugerido; un 0 explícito se respeta. */
 function valorODefecto(valor, porDefecto) {
   if (valor === undefined || valor === null || valor === '') return positivo(porDefecto);
   return positivo(valor);
@@ -31,9 +34,9 @@ function valorODefecto(valor, porDefecto) {
  * @param {object} config
  */
 export function construirFactura(entrada, config) {
-  const aseoResidencial = valorODefecto(entrada.aseoResidencial, LINEA_BASE.aseoResidencial);
-  const aseoComercial = valorODefecto(entrada.aseoComercial, LINEA_BASE.aseoComercial);
-  const iluminacion = valorODefecto(entrada.iluminacion, LINEA_BASE.iluminacion);
+  const aseoResidencial = valorODefecto(entrada.aseoResidencial, VALORES_SUGERIDOS.aseoResidencial);
+  const aseoComercial = valorODefecto(entrada.aseoComercial, VALORES_SUGERIDOS.aseoComercial);
+  const iluminacion = valorODefecto(entrada.iluminacion, VALORES_SUGERIDOS.iluminacion);
   const otrosComunes = positivo(entrada.otrosComunes);
 
   const particulares = {

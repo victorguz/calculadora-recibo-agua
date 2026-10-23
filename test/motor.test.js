@@ -4,7 +4,14 @@
  */
 import assert from 'node:assert/strict';
 import { calcular, calcularDesdeFormulario } from '../js/motor.js';
-import { LINEA_BASE, BASE_TOTAL, BASE_AA } from '../js/config.js';
+import {
+  LINEA_BASE,
+  BASE_TOTAL,
+  BASE_AA,
+  FACTURAS,
+  REFERENCIA_ASEO,
+  VALORES_SUGERIDOS,
+} from '../js/config.js';
 
 let ok = 0;
 function prueba(nombre, fn) {
@@ -90,26 +97,85 @@ prueba('Ajuste tarifario (escenario C) no castiga al restaurante', () => {
 
 /* ---------------------------------- aseo ---------------------------------- */
 
-prueba('Aseo 176.030 -> 44.296 / 46.107 / 85.627', () => {
-  const aseo = bloque(calcular(facturaBase, {}), 'aseo');
-  assert.deepEqual(aseo.reparto, { residencial: 44296, odontologia: 46107, restaurante: 85627 });
+const OCT = FACTURAS[2].aseo;
+const ANT = FACTURAS[1].aseo;
+const facturaAseoOct = { aseoResidencial: OCT.residencial, aseoComercial: OCT.comercial };
+
+prueba('Las facturas documentadas cuadran consigo mismas', () => {
+  for (const f of FACTURAS) {
+    const a = f.aseo;
+    assert.equal(a.residencial + a.comercial, a.total, `total de ${f.periodo}`);
+    assert.equal(
+      a.cargoFijoUnitario * a.localesComerciales + a.consumoComercial,
+      a.comercial,
+      `comercial de ${f.periodo}`,
+    );
+  }
 });
 
-prueba('Aseo 220.000 con reparto inicial 35/65', () => {
-  const aseo = bloque(calcular({ ...facturaBase, aseoComercial: 220000 - 44296 }, {}), 'aseo');
-  assert.deepEqual(aseo.reparto, { residencial: 44296, odontologia: 61496, restaurante: 114208 });
-  assert.equal(aseo.total, 220000);
+prueba('Octubre: cada local paga su cargo fijo y el aumento del consumo va al restaurante', () => {
+  const aseo = bloque(calcular(facturaAseoOct, {}), 'aseo');
+  assert.equal(aseo.total, 326892);
+  assert.equal(aseo.cargoFijo.locales, 2);
+  assert.equal(aseo.cargoFijo.odontologia, 71028);
+  assert.equal(aseo.cargoFijo.restaurante, 71028);
+  assert.equal(aseo.consumo.actual, 136178);
+  assert.equal(aseo.consumo.historico, 54938);
+  assert.equal(aseo.consumo.aumento, 81240);
+  // Consumo histórico 35/65 y todo el aumento al restaurante.
+  assert.equal(aseo.consumo.odontologia, 19228);
+  assert.equal(aseo.consumo.restaurante, 35710 + 81240);
+  assert.deepEqual(aseo.reparto, { residencial: 48658, odontologia: 90256, restaurante: 187978 });
+  assert.equal(suma(aseo.reparto), 326892);
 });
 
-prueba('Aseo 220.000 con incremento atribuido al restaurante', () => {
+prueba('El cargo fijo no se reparte 35/65', () => {
+  const aseo = bloque(calcular(facturaAseoOct, {}), 'aseo');
+  // Si se repartiera 35/65, la odontología pagaría 49.720 de cargo fijo, no 71.028.
+  assert.notEqual(aseo.cargoFijo.odontologia, Math.round(aseo.cargoFijo.total * 0.35));
+  assert.equal(aseo.cargoFijo.odontologia, aseo.cargoFijo.restaurante);
+  assert.equal(aseo.escenarios.some((e) => e.codigo === 'Aseo-CF'), true);
+});
+
+prueba('Mes anterior: un solo local, el cargo fijo lo asume la odontología', () => {
   const aseo = bloque(
-    calcular({ ...facturaBase, aseoComercial: 220000 - 44296 }, { incrementoAseoAlRestaurante: true }),
+    calcular(
+      { aseoResidencial: ANT.residencial, aseoComercial: ANT.comercial },
+      { localesComerciales: 1, cargoFijoComercial: ANT.cargoFijoUnitario },
+    ),
     'aseo',
   );
-  assert.equal(aseo.escenarios.some((e) => e.codigo === 'Aseo-B'), true);
-  assert.equal(aseo.reparto.odontologia, 46107);
-  assert.equal(aseo.reparto.restaurante, 85627 + 43970);
-  assert.equal(aseo.total, 220000);
+  assert.equal(aseo.total, 174373);
+  assert.equal(aseo.cargoFijo.odontologia, 70854);
+  assert.equal(aseo.cargoFijo.restaurante, 0);
+  assert.equal(aseo.consumo.aumento, 0);
+  assert.equal(suma(aseo.reparto), 174373);
+});
+
+prueba('Sin evidencia, el aumento del consumo se reparte 35/65', () => {
+  const aseo = bloque(calcular(facturaAseoOct, { incrementoAseoAlRestaurante: false }), 'aseo');
+  assert.equal(aseo.escenarios.some((e) => e.codigo === 'Aseo-A2'), true);
+  assert.equal(aseo.consumo.odontologia, Math.round(136178 * 0.35));
+  assert.equal(suma(aseo.reparto), 326892);
+});
+
+prueba('Si el consumo vuelve al histórico, nadie asume aumento', () => {
+  const comercial = 71028 * 2 + REFERENCIA_ASEO.consumoComercial;
+  const aseo = bloque(calcular({ aseoResidencial: 48658, aseoComercial: comercial }, {}), 'aseo');
+  assert.equal(aseo.escenarios.some((e) => e.codigo === 'Aseo-A'), true);
+  assert.equal(aseo.consumo.odontologia, 19228);
+  assert.equal(aseo.consumo.restaurante, 35710);
+  assert.equal(suma(aseo.reparto), comercial + 48658);
+});
+
+prueba('Cargo fijo mal configurado no rompe ni descuadra', () => {
+  const aseo = bloque(
+    calcular({ aseoResidencial: 48658, aseoComercial: 50000 }, { localesComerciales: 2 }),
+    'aseo',
+  );
+  assert.equal(aseo.escenarios.some((e) => e.codigo === 'Aseo-CF-aviso'), true);
+  assert.equal(aseo.consumo.actual, 0);
+  assert.equal(suma(aseo.reparto), 50000 + 48658);
 });
 
 /* ------------------------------ otros conceptos ------------------------------ */
@@ -120,76 +186,93 @@ prueba('Iluminación 15.000 -> 5.000 cada uno', () => {
 });
 
 prueba('Gastos particulares van a quien los generó', () => {
-  const r = calcular({ ...facturaBase, particulares: { odontologia: 50000 } }, {});
+  const r = calcular(
+    { ...facturaBase, ...facturaAseoOct, particulares: { odontologia: 50000 } },
+    {},
+  );
   const p = bloque(r, 'particulares');
   assert.equal(p.reparto.odontologia, 50000);
   assert.equal(p.reparto.residencial, 0);
-  assert.equal(r.totales.odontologia, 45035 + 46107 + 5000 + 50000);
+  assert.equal(r.totales.odontologia, 45035 + 90256 + 5000 + 50000);
 });
 
 /* --------------------------- formulario unificado --------------------------- */
 
-prueba('Sólo el total, igual a la línea base: reproduce el desglose base', () => {
-  const r = calcularDesdeFormulario({ total: BASE_TOTAL }, {});
+// Conceptos que el formulario sugiere por defecto: aseo de octubre + iluminación.
+const FIJOS =
+  VALORES_SUGERIDOS.aseoResidencial + VALORES_SUGERIDOS.aseoComercial + VALORES_SUGERIDOS.iluminacion;
+// Una factura típica de octubre si el acueducto se mantuviera en la línea base.
+const TOTAL_TIPICO = FIJOS + BASE_AA;
+
+prueba('Los valores sugeridos son los de la factura más reciente', () => {
+  assert.equal(VALORES_SUGERIDOS.aseoResidencial, FACTURAS[2].aseo.residencial);
+  assert.equal(VALORES_SUGERIDOS.aseoComercial, FACTURAS[2].aseo.comercial);
+  assert.equal(FIJOS, 341892);
+});
+
+prueba('Sólo el total: el residuo es el consumo de acueducto', () => {
+  const r = calcularDesdeFormulario({ total: TOTAL_TIPICO }, {});
   assert.equal(r.desglose.modo, 'total');
   assert.equal(r.desglose.consumoDerivado, BASE_AA);
-  assert.equal(r.desglose.factura.aseoResidencial, LINEA_BASE.aseoResidencial);
-  assert.equal(r.desglose.factura.aseoComercial, LINEA_BASE.aseoComercial);
-  assert.equal(r.desglose.factura.iluminacion, LINEA_BASE.iluminacion);
+  assert.equal(r.desglose.factura.aseoComercial, VALORES_SUGERIDOS.aseoComercial);
   assert.equal(bloque(r, 'acueducto').escenarios[0].codigo, 'A');
+  assert.equal(suma(r.totales), TOTAL_TIPICO);
 });
 
-prueba('Sólo el total: todo el aumento cae en consumo, no en aseo', () => {
-  const r = calcularDesdeFormulario({ total: 400000 }, {});
-  const aumento = 400000 - BASE_TOTAL;
-  assert.equal(r.desglose.consumoDerivado, BASE_AA + aumento);
-  assert.equal(bloque(r, 'aseo').total, 176030);
-  assert.equal(bloque(r, 'comunes').total, 15000);
-  // El aseo no se movió, así que el incremento completo lo asume el restaurante.
+prueba('Sólo el total: el aumento cae en consumo de agua, no en aseo', () => {
+  const r = calcularDesdeFormulario({ total: TOTAL_TIPICO + 50000 }, {});
+  assert.equal(r.desglose.consumoDerivado, BASE_AA + 50000);
+  assert.equal(bloque(r, 'aseo').total, 326892);
   const aa = bloque(r, 'acueducto');
   assert.equal(aa.reparto.residencial, 45035);
-  assert.equal(aa.reparto.odontologia, 45035);
-  assert.equal(aa.reparto.restaurante, 45035 + aumento);
-  assert.equal(r.totalFactura, 400000);
-  assert.equal(suma(r.totales), 400000);
+  assert.equal(aa.reparto.restaurante, 45035 + 50000);
+  assert.equal(suma(r.totales), TOTAL_TIPICO + 50000);
 });
 
-prueba('Sólo el total: 300.000 cuadra exacto y todos bajan', () => {
-  const r = calcularDesdeFormulario({ total: 300000 }, {});
+prueba('Sólo el total: si el agua baja, los tres pagan menos', () => {
+  const r = calcularDesdeFormulario({ total: 450000 }, {});
   assert.equal(r.cuadra, true);
-  assert.equal(suma(r.totales), 300000);
-  assert.equal(bloque(r, 'acueducto').escenarios[0].codigo, 'A-baja');
+  assert.equal(r.desglose.consumoDerivado, 450000 - FIJOS);
+  const aa = bloque(r, 'acueducto');
+  assert.equal(aa.escenarios[0].codigo, 'A-baja');
+  assert.equal(aa.reparto.restaurante, 36036);
+  assert.equal(suma(r.totales), 450000);
 });
 
 prueba('Total con aseo comercial ajustado a mano', () => {
-  const r = calcularDesdeFormulario({ total: 400000, aseoComercial: 175704 }, {});
-  assert.equal(bloque(r, 'aseo').total, 44296 + 175704);
-  assert.equal(r.desglose.consumoDerivado, 400000 - 220000 - 15000);
-  assert.equal(suma(r.totales), 400000);
+  const r = calcularDesdeFormulario({ total: TOTAL_TIPICO, aseoComercial: 200000 }, {});
+  assert.equal(bloque(r, 'aseo').total, VALORES_SUGERIDOS.aseoResidencial + 200000);
+  assert.equal(
+    r.desglose.consumoDerivado,
+    TOTAL_TIPICO - VALORES_SUGERIDOS.aseoResidencial - 200000 - VALORES_SUGERIDOS.iluminacion,
+  );
+  assert.equal(suma(r.totales), TOTAL_TIPICO);
 });
 
 prueba('Total con gastos particulares: se descuentan antes de derivar el consumo', () => {
-  const r = calcularDesdeFormulario({ total: 400000, particulares: { restaurante: 30000 } }, {});
-  assert.equal(r.desglose.consumoDerivado, 400000 - 176030 - 15000 - 30000);
-  assert.equal(r.totalFactura, 400000);
-  assert.equal(suma(r.totales), 400000);
+  const r = calcularDesdeFormulario(
+    { total: TOTAL_TIPICO + 30000, particulares: { restaurante: 30000 } },
+    {},
+  );
+  assert.equal(r.desglose.consumoDerivado, BASE_AA);
+  assert.equal(r.totalFactura, TOTAL_TIPICO + 30000);
+  assert.equal(suma(r.totales), TOTAL_TIPICO + 30000);
 });
 
 prueba('Sin total: la factura es la suma de los conceptos', () => {
-  const r = calcularDesdeFormulario({ total: null, acueducto: 120000, alcantarillado: 80000 }, {});
+  const r = calcularDesdeFormulario({ total: null }, {});
   assert.equal(r.desglose.modo, 'conceptos');
-  assert.equal(r.totalFactura, 200000 + 176030 + 15000);
+  assert.equal(r.totalFactura, TOTAL_TIPICO);
   assert.equal(suma(r.totales), r.totalFactura);
 });
 
 prueba('Total menor que los conceptos fijos: avisa y no rompe', () => {
-  const r = calcularDesdeFormulario({ total: 100000 }, {});
+  const r = calcularDesdeFormulario({ total: 200000 }, {});
   assert.equal(r.desglose.insuficiente, true);
-  assert.equal(r.desglose.faltante, 191030 - 100000 + 0);
+  assert.equal(r.desglose.faltante, FIJOS - 200000);
   assert.equal(r.desglose.consumoDerivado, 0);
   assert.equal(suma(r.totales), r.totalFactura);
 });
-
 prueba('Factura en cero no rompe el cálculo', () => {
   const r = calcular({}, {});
   assert.equal(r.totalFactura, 0);

@@ -4,7 +4,7 @@
  */
 
 import {
-  LINEA_BASE,
+  VALORES_SUGERIDOS,
   CONFIG_DEFAULT,
   cargarConfig,
   guardarConfig,
@@ -16,6 +16,7 @@ import {
   renderResultado,
   renderResumenDerivado,
   renderLineaBase,
+  renderHistorial,
   resumenTexto,
   pintarChipLineaBase,
 } from './ui.js';
@@ -44,6 +45,9 @@ const el = {
   incrementoAseoAlRestaurante: $('incrementoAseoAlRestaurante'),
   pctRestauranteAA: $('pctRestauranteAA'),
   pctOdontologiaAseo: $('pctOdontologiaAseo'),
+  cargoFijoComercial: $('cargoFijoComercial'),
+  localesComerciales: $('localesComerciales'),
+  consumoComercialHistorico: $('consumoComercialHistorico'),
   tarAcuBase: $('tarAcuBase'),
   tarAcuActual: $('tarAcuActual'),
   tarAlcBase: $('tarAlcBase'),
@@ -61,6 +65,7 @@ const el = {
   avisoCopia: $('avisoCopia'),
   resultados: $('resultados'),
   detalleLineaBase: $('detalleLineaBase'),
+  detalleHistorial: $('detalleHistorial'),
 };
 
 let ultimoResultado = null;
@@ -78,6 +83,18 @@ function leerConfig() {
     pctRestauranteAA: leerNumeroODefecto(el.pctRestauranteAA.value, CONFIG_DEFAULT.pctRestauranteAA),
     pctOdontologiaAseo: pctOdo,
     pctRestauranteAseo: Math.max(0, 100 - pctOdo),
+    cargoFijoComercial: leerNumeroODefecto(
+      el.cargoFijoComercial.value,
+      CONFIG_DEFAULT.cargoFijoComercial,
+    ),
+    localesComerciales: leerNumeroODefecto(
+      el.localesComerciales.value,
+      CONFIG_DEFAULT.localesComerciales,
+    ),
+    consumoComercialHistorico: leerNumeroODefecto(
+      el.consumoComercialHistorico.value,
+      CONFIG_DEFAULT.consumoComercialHistorico,
+    ),
     consumoHabitualDemostrado: el.consumoHabitualDemostrado.checked,
     incrementoAseoAlRestaurante: el.incrementoAseoAlRestaurante.checked,
     tarifas: {
@@ -100,11 +117,11 @@ function leerConfig() {
 function leerEntrada() {
   return {
     total: hayTotal() ? leerNumero(el.totalFactura.value) : null,
-    acueducto: leerNumeroODefecto(el.acueducto.value, LINEA_BASE.acueducto),
-    alcantarillado: leerNumeroODefecto(el.alcantarillado.value, LINEA_BASE.alcantarillado),
-    aseoResidencial: leerNumeroODefecto(el.aseoResidencial.value, LINEA_BASE.aseoResidencial),
-    aseoComercial: leerNumeroODefecto(el.aseoComercial.value, LINEA_BASE.aseoComercial),
-    iluminacion: leerNumeroODefecto(el.iluminacion.value, LINEA_BASE.iluminacion),
+    acueducto: leerNumeroODefecto(el.acueducto.value, VALORES_SUGERIDOS.acueducto),
+    alcantarillado: leerNumeroODefecto(el.alcantarillado.value, VALORES_SUGERIDOS.alcantarillado),
+    aseoResidencial: leerNumeroODefecto(el.aseoResidencial.value, VALORES_SUGERIDOS.aseoResidencial),
+    aseoComercial: leerNumeroODefecto(el.aseoComercial.value, VALORES_SUGERIDOS.aseoComercial),
+    iluminacion: leerNumeroODefecto(el.iluminacion.value, VALORES_SUGERIDOS.iluminacion),
     otrosComunes: leerNumeroODefecto(el.otrosComunes.value, 0),
     particulares: {
       residencial: leerNumeroODefecto(el.partResidencial.value, 0),
@@ -157,6 +174,14 @@ function pintarConfig(config) {
       ? ''
       : String(config.pctRestauranteAA).replace('.', ',');
   el.pctOdontologiaAseo.value = config.pctOdontologiaAseo ?? '';
+  el.cargoFijoComercial.value =
+    config.cargoFijoComercial === CONFIG_DEFAULT.cargoFijoComercial ? '' : config.cargoFijoComercial;
+  el.localesComerciales.value =
+    config.localesComerciales === CONFIG_DEFAULT.localesComerciales ? '' : config.localesComerciales;
+  el.consumoComercialHistorico.value =
+    config.consumoComercialHistorico === CONFIG_DEFAULT.consumoComercialHistorico
+      ? ''
+      : config.consumoComercialHistorico;
   el.consumoHabitualDemostrado.checked = Boolean(config.consumoHabitualDemostrado);
   el.incrementoAseoAlRestaurante.checked = Boolean(config.incrementoAseoAlRestaurante);
 
@@ -187,6 +212,9 @@ function aplicarUrl(datos) {
   asignar('partRestaurante', el.partRestaurante);
   asignar('pctRestauranteAA', el.pctRestauranteAA);
   asignar('pctOdontologiaAseo', el.pctOdontologiaAseo);
+  asignar('cargoFijoComercial', el.cargoFijoComercial);
+  asignar('localesComerciales', el.localesComerciales);
+  asignar('consumoComercialHistorico', el.consumoComercialHistorico);
   asignar('tarAcuBase', el.tarAcuBase);
   asignar('tarAcuActual', el.tarAcuActual);
   asignar('tarAlcBase', el.tarAlcBase);
@@ -216,6 +244,9 @@ function datosParaEnlace() {
     partRestaurante: el.partRestaurante.value,
     pctRestauranteAA: el.pctRestauranteAA.value,
     pctOdontologiaAseo: el.pctOdontologiaAseo.value,
+    cargoFijoComercial: el.cargoFijoComercial.value,
+    localesComerciales: el.localesComerciales.value,
+    consumoComercialHistorico: el.consumoComercialHistorico.value,
     consumoHabitualDemostrado: el.consumoHabitualDemostrado.checked,
     incrementoAseoAlRestaurante: el.incrementoAseoAlRestaurante.checked,
     tarAcuBase: el.tarAcuBase.value,
@@ -321,6 +352,7 @@ function enlazarEventos() {
 function iniciar() {
   pintarChipLineaBase(el.chipLineaBase);
   renderLineaBase(el.detalleLineaBase);
+  renderHistorial(el.detalleHistorial);
   pintarConfig(cargarConfig());
 
   const datosUrl = leerDesdeUrl();

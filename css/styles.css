@@ -454,3 +454,25 @@ input[type="text"].derivado {
   .tarjeta, .parte { box-shadow: none; break-inside: avoid; }
   .escenario { break-inside: avoid; }
 }
+
+/* ---------------- Historial de facturas ---------------- */
+
+.lista-cambios {
+  margin: .6rem 0 0;
+  padding-left: 1.2rem;
+  font-size: .88rem;
+}
+
+.lista-cambios li { margin-bottom: .4rem; }
+.lista-cambios strong { font-weight: 650; }
+
+.nota-acuerdo { border-left-color: var(--odontologia); }
+.nota-acuerdo strong { color: var(--texto); }
+
+.cita {
+  margin: .5rem 0 0;
+  padding-left: .85rem;
+  border-left: 2px solid var(--borde-fuerte);
+  font-style: italic;
+  color: var(--texto);
+}

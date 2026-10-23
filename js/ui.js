@@ -5,7 +5,17 @@
  */
 
 import { pesos, pesosDecimal, porcentaje, numeroDecimal } from './formato.js';
-import { PARTES, LINEA_BASE, LINEA_BASE_DETALLE, BASE_AA, BASE_ASEO, BASE_TOTAL } from './config.js';
+import {
+  PARTES,
+  LINEA_BASE,
+  LINEA_BASE_DETALLE,
+  BASE_AA,
+  BASE_ASEO,
+  BASE_TOTAL,
+  FACTURAS,
+  REFERENCIA_ASEO,
+  ACUERDO_CARGO_FIJO,
+} from './config.js';
 
 const ORDEN = PARTES.map((p) => p.id);
 
@@ -133,7 +143,10 @@ function subtituloBloque(b) {
     return `Acueducto ${pesos(b.detalle.acueducto)} + alcantarillado ${pesos(b.detalle.alcantarillado)} · línea base ${pesos(b.baseIndexada)}`;
   }
   if (b.id === 'aseo') {
-    return `Residencial ${pesos(b.detalle.residencial)} + comercial ${pesos(b.detalle.comercial)} · histórico comercial ${pesos(b.baseIndexada)}`;
+    return (
+      `Residencial ${pesos(b.detalle.residencial)} + comercial ${pesos(b.detalle.comercial)} · ` +
+      `cargo fijo ${b.cargoFijo.locales} × ${pesos(b.cargoFijo.unitario)} + consumo ${pesos(b.consumo.actual)}`
+    );
   }
   if (b.id === 'comunes') {
     return b.detalle.otros > 0
@@ -184,6 +197,63 @@ function tablaDesglose(r) {
           </tfoot>
         </table>
       </div>
+    </div>`;
+}
+
+/** Desglose del aseo comercial: qué parte es cargo fijo y qué parte consumo. */
+function bloqueAseo(r) {
+  const b = r.bloques.find((x) => x.id === 'aseo');
+  if (!b || b.total <= 0) return '';
+
+  const cf = b.cargoFijo;
+  const c = b.consumo;
+  const difClase = c.aumento > 0 ? 'sube' : c.aumento < 0 ? 'baja' : 'nulo';
+  const difTexto =
+    c.aumento === 0
+      ? 'igual al histórico'
+      : `${c.aumento > 0 ? '+' : '−'}${pesos(Math.abs(c.aumento))} frente al histórico`;
+
+  return `
+    <div class="tarjeta">
+      <h2>Cómo se parte el aseo comercial</h2>
+      <p class="ayuda">
+        El cargo fijo no se reparte: cada local comercial paga el suyo. Lo que se reparte
+        ${porcentaje(r.config.pctOdontologiaAseo, 0)} / ${porcentaje(r.config.pctRestauranteAseo, 0)}
+        es el consumo por toneladas, y todo lo que ese consumo suba sobre el histórico lo asume el restaurante.
+      </p>
+      <div class="tabla-envoltura">
+        <table class="tabla-desglose">
+          <thead>
+            <tr><th>Parte del cobro</th><th>🦷 Odontología</th><th>🍽️ Restaurante</th><th>Total</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Cargo fijo<span class="sub">${cf.locales} local${cf.locales === 1 ? '' : 'es'} × ${pesos(cf.unitario)} · no se reparte</span></th>
+              <td>${pesos(cf.odontologia)}</td>
+              <td>${pesos(cf.restaurante)}</td>
+              <td>${pesos(cf.total)}</td>
+            </tr>
+            <tr>
+              <th scope="row">Consumo por toneladas<span class="sub">histórico ${pesos(c.historico)} (${esc(REFERENCIA_ASEO.periodo).toLowerCase()}) · <span class="${difClase}">${difTexto}</span></span></th>
+              <td>${pesos(c.odontologia)}</td>
+              <td>${pesos(c.restaurante)}</td>
+              <td>${pesos(c.actual)}</td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <th>Aseo comercial</th>
+              <td>${pesos(b.reparto.odontologia)}</td>
+              <td>${pesos(b.reparto.restaurante)}</td>
+              <td>${pesos(b.detalle.comercial)}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+      <p class="ayuda pie-tabla">
+        El componente residencial (${pesos(b.detalle.residencial)}) no entra aquí: lo asume
+        íntegramente la unidad residencial, porque es su propio consumo.
+      </p>
     </div>`;
 }
 
@@ -254,6 +324,7 @@ export function renderResultado(r, contenedor) {
     bloqueTotal(r),
     tarjetasPartes(r),
     tablaDesglose(r),
+    bloqueAseo(r),
     bloqueEscenarios(r),
     bloqueOrigen(r),
     bloqueComparativo(r),
@@ -352,6 +423,91 @@ export function renderLineaBase(contenedor) {
       alcantarillado ${numeroDecimal(3048.17)} $/m³ (CMI ${numeroDecimal(2283.32)} + CMO ${numeroDecimal(655.32)} + impuestos ${numeroDecimal(109.53)})
       y aseo ${numeroDecimal(136020.43)} $/tonelada de recolección y transporte.
       Son los valores precargados en el ajuste anual.
+    </div>`;
+}
+
+/* ----------------------- historial de facturas ----------------------- */
+
+export function renderHistorial(contenedor) {
+  const filas = FACTURAS.map((f) => {
+    const a = f.aseo;
+    return `
+      <tr>
+        <th scope="row">${esc(f.periodo)}<span class="sub">${esc(f.etiqueta)}</span></th>
+        <td>${pesos(a.residencial)}</td>
+        <td>${pesos(a.comercial)}</td>
+        <td>${a.localesComerciales} × ${pesos(a.cargoFijoUnitario)}</td>
+        <td>${pesos(a.consumoComercial)}</td>
+        <td>${numeroDecimal(a.toneladasComerciales, 4)}</td>
+        <td>${pesos(a.total)}</td>
+      </tr>`;
+  }).join('');
+
+  const primera = FACTURAS[0].aseo;
+  const ultima = FACTURAS[FACTURAS.length - 1].aseo;
+  const anterior = FACTURAS[FACTURAS.length - 2].aseo;
+
+  const subeTotal = ultima.total - anterior.total;
+  const subeComercial = ultima.comercial - anterior.comercial;
+  const subeResidencial = ultima.residencial - anterior.residencial;
+  const subeCargoFijo =
+    ultima.cargoFijoUnitario * ultima.localesComerciales -
+    anterior.cargoFijoUnitario * anterior.localesComerciales;
+  const subeConsumo = ultima.consumoComercial - anterior.consumoComercial;
+
+  contenedor.innerHTML = `
+    <p class="ayuda">
+      Las tres facturas de aseo que se han revisado. Quedan anotadas para sustentar el reparto
+      y la revisión semestral del numeral 9.
+    </p>
+
+    <div class="tabla-envoltura">
+      <table class="tabla-desglose">
+        <thead>
+          <tr>
+            <th>Período</th><th>Residencial</th><th>Comercial</th>
+            <th>Cargo fijo</th><th>Consumo</th><th>Ton. com.</th><th>Total aseo</th>
+          </tr>
+        </thead>
+        <tbody>${filas}</tbody>
+      </table>
+    </div>
+
+    <h3 class="subtitulo">Qué cambió en la última factura</h3>
+    <ul class="lista-cambios">
+      <li><strong>Total del aseo:</strong> ${pesos(anterior.total)} → ${pesos(ultima.total)}
+        <span class="sube">(+${pesos(subeTotal)}, ${porcentaje((subeTotal / anterior.total) * 100, 1)})</span></li>
+      <li><strong>Residencial:</strong> ${pesos(anterior.residencial)} → ${pesos(ultima.residencial)}
+        <span class="nulo">(${subeResidencial >= 0 ? '+' : '−'}${pesos(Math.abs(subeResidencial))}, prácticamente igual)</span></li>
+      <li><strong>Cargo fijo comercial:</strong> ${anterior.localesComerciales} local a ${pesos(anterior.cargoFijoUnitario)}
+        → ${ultima.localesComerciales} locales a ${pesos(ultima.cargoFijoUnitario)}
+        <span class="sube">(+${pesos(subeCargoFijo)})</span></li>
+      <li><strong>Consumo comercial:</strong> ${pesos(anterior.consumoComercial)} → ${pesos(ultima.consumoComercial)}
+        <span class="sube">(+${pesos(subeConsumo)})</span>, con el tonelaje pasando de
+        ${numeroDecimal(anterior.toneladasComerciales, 4)} a ${numeroDecimal(ultima.toneladasComerciales, 4)} ton</li>
+      <li><strong>Tarifas unitarias:</strong> sin cambio relevante entre los dos meses
+        (recolección ${pesosDecimal(anterior.tarifaRecoleccion)} → ${pesosDecimal(ultima.tarifaRecoleccion)}),
+        así que no hay ajuste tarifario que reclamar.</li>
+    </ul>
+
+    <h3 class="subtitulo">Acuerdo sobre el cargo fijo <span class="opcional">${esc(ACUERDO_CARGO_FIJO.fecha)}</span></h3>
+    <div class="nota-almacen nota-acuerdo">
+      <strong>Comunicado a la odontología · ${esc(ACUERDO_CARGO_FIJO.fuente)}</strong>
+      <p class="cita">${esc(ACUERDO_CARGO_FIJO.texto)}</p>
+    </div>
+    <ul class="lista-cambios">
+      ${ACUERDO_CARGO_FIJO.consecuencias.map((c) => `<li>${esc(c)}</li>`).join('')}
+    </ul>
+
+    <div class="nota-almacen">
+      <strong>Por qué el aumento es atribuible al restaurante.</strong>
+      El residencial lleva tres facturas en el mismo nivel
+      (${pesos(primera.residencial)} → ${pesos(anterior.residencial)} → ${pesos(ultima.residencial)})
+      y la odontología venía en ${numeroDecimal(anterior.toneladasComerciales, 4)} toneladas.
+      Si sostiene ese nivel, el restaurante aporta
+      ${numeroDecimal(ultima.toneladasComerciales - anterior.toneladasComerciales, 4)} toneladas, el
+      ${porcentaje(((ultima.toneladasComerciales - anterior.toneladasComerciales) / ultima.toneladasComerciales) * 100, 0)}
+      del tonelaje comercial. Se cumple la condición del numeral 2 y aplica el numeral 5.
     </div>`;
 }
 

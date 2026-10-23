@@ -23,6 +23,33 @@ campos son opcionales y traen por defecto el valor de la línea base de Julio 20
 **No hay margen de tolerancia:** cualquier peso por encima de la línea base es incremento y lo
 asume el restaurante, siempre que residencial y odontología mantengan su consumo habitual.
 
+## Cambio de octubre de 2026: el cargo fijo del aseo
+
+Triple A se dio cuenta de que en el predio hay **dos locales comerciales** y empezó a cobrar una
+tarifa fija mensual por cada uno ($71.028). Por eso el cargo fijo ya **no se divide 35/65**: cada
+local paga el que le corresponde. Lo que se sigue repartiendo 35% / 65% es el consumo por
+toneladas, y todo el aumento de ese consumo sobre el histórico lo asume el restaurante.
+
+| Período | Residencial | Comercial | Cargo fijo | Consumo | Ton. comerciales | Total |
+|---|---:|---:|---:|---:|---:|---:|
+| Julio 2026 *(línea base)* | $49.020 | $127.010 | 1 × $72.408 | $54.602 | 0,1202 | $176.030 |
+| Mes anterior | $48.581 | $125.792 | 1 × $70.854 | $54.938 | 0,1180 | $174.373 |
+| Octubre 2026 | $48.658 | $278.234 | 2 × $71.028 | $136.178 | 0,3032 | $326.892 |
+
+Las tarifas unitarias **no se movieron** entre los dos últimos meses, así que no hay ajuste
+tarifario que reclamar. El residencial lleva tres facturas igual (+0,16%) y la odontología venía
+en 0,1180 toneladas; si sostiene ese nivel, el restaurante aporta el 61% del tonelaje comercial.
+
+Con la factura de octubre el aseo comercial queda así:
+
+| | Cargo fijo | Consumo | **Total** |
+|---|---:|---:|---:|
+| 🦷 Odontología | $71.028 | $19.228 | **$90.256** |
+| 🍽️ Restaurante | $71.028 | $116.950 | **$187.978** |
+
+Las tres facturas y el texto del acuerdo están en `js/config.js` (`FACTURAS` y
+`ACUERDO_CARGO_FIJO`) y se consultan en la app bajo *Facturas del período y acuerdo del cargo fijo*.
+
 ## Línea base (Julio 2026)
 
 | Concepto | Valor |
@@ -63,9 +90,10 @@ Precargado en el ajuste anual (escenario C):
 | B-sin-evidencia | Acueducto + alcantarillado | El consumo aumentó pero no se acreditó la condición anterior: el total se divide en tercios. |
 | C | Acueducto, alcantarillado y aseo | La tarifa unitaria subió: la línea base se indexa y el mayor valor por tarifa se reparte entre las tres partes. |
 | D | Acueducto + alcantarillado | La revisión semestral elevó la participación del restaurante por encima del 33,33%. |
-| Aseo A / A2 / A3 | Aseo | Reparto del componente comercial 35% odontología / 65% restaurante. |
-| Aseo B | Aseo | Hay evidencia de que el incremento del aseo viene del restaurante: lo asume completo. |
-| Aseo R | Aseo | El componente residencial se apartó del histórico; lo asume la unidad residencial. |
+| Aseo CF / CF1 | Aseo | Cada local comercial paga su propio cargo fijo (CF1: la factura sólo cobra uno). |
+| Aseo A / A2 / A3 | Aseo | Reparto del consumo comercial 35% odontología / 65% restaurante. |
+| Aseo B | Aseo | El consumo de aseo aumentó y el aumento lo asume completo el restaurante. |
+| Aseo R | Aseo | El componente residencial se apartó más de $1.000 de su referencia; lo asume la unidad residencial. |
 | Comunes | Iluminación y comunes | Se dividen en partes iguales. |
 | Particulares | Otros conceptos particulares | Multas, intereses o acuerdos de pago los asume quien los generó. |
 

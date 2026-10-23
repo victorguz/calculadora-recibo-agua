@@ -47,10 +47,11 @@
       </summary>
       <p class="ayuda">Todos los campos son opcionales: el que quede vacío toma el valor de la línea base de Julio 2026.</p>
 
-      <h3 class="subtitulo">Aseo <span class="opcional">estable mes a mes</span></h3>
+      <h3 class="subtitulo">Aseo <span class="opcional">revisar cada mes</span></h3>
+      <p class="ayuda">Desde octubre de 2026 el aseo cambió de nivel, así que estos valores sugieren la última factura y conviene confirmarlos contra el recibo del mes.</p>
       <div class="rejilla rejilla-2">
-        <label class="campo"><span>Aseo residencial</span><input type="text" inputmode="numeric" id="aseoResidencial" placeholder="44.296" autocomplete="off" /><small>Lo asume la unidad residencial</small></label>
-        <label class="campo"><span>Aseo comercial</span><input type="text" inputmode="numeric" id="aseoComercial" placeholder="131.734" autocomplete="off" /><small>Se reparte 35% odontología / 65% restaurante</small></label>
+        <label class="campo"><span>Aseo residencial</span><input type="text" inputmode="numeric" id="aseoResidencial" placeholder="48.658" autocomplete="off" /><small>Lo asume la unidad residencial</small></label>
+        <label class="campo"><span>Aseo comercial</span><input type="text" inputmode="numeric" id="aseoComercial" placeholder="278.234" autocomplete="off" /><small>Cargo fijo de cada local + consumo repartido 35% / 65%</small></label>
       </div>
 
       <h3 class="subtitulo">Conceptos comunes</h3>
@@ -98,7 +99,18 @@
     <h3 class="subtitulo">Porcentajes</h3>
     <div class="rejilla rejilla-2">
       <label class="campo"><span>Restaurante en acueducto (%)</span><input type="text" inputmode="decimal" id="pctRestauranteAA" placeholder="33,33" autocomplete="off" /><small>Ajuste progresivo del numeral 3. Sólo sube por revisión semestral.</small></label>
-      <label class="campo"><span>Odontología en aseo comercial (%)</span><input type="text" inputmode="decimal" id="pctOdontologiaAseo" placeholder="35" autocomplete="off" /><small>El restaurante asume el resto.</small></label>
+      <label class="campo"><span>Odontología en el consumo de aseo (%)</span><input type="text" inputmode="decimal" id="pctOdontologiaAseo" placeholder="35" autocomplete="off" /><small>Aplica sólo al consumo por toneladas, no al cargo fijo. El restaurante asume el resto.</small></label>
+    </div>
+
+    <h3 class="subtitulo">Cargo fijo del aseo comercial <span class="opcional">acuerdo de octubre 2026</span></h3>
+    <p class="ayuda">
+      Triple A registró dos locales comerciales y cobra una tarifa fija por cada uno. Ese cargo
+      ya no se divide 35/65: cada local paga el suyo. Lo que sí se reparte es el consumo por toneladas.
+    </p>
+    <div class="rejilla rejilla-3">
+      <label class="campo"><span>Cargo fijo por local</span><input type="text" inputmode="numeric" id="cargoFijoComercial" placeholder="71.028" autocomplete="off" /><small>Línea «Costo fijo total Comercial» ÷ unidades</small></label>
+      <label class="campo"><span>Locales comerciales</span><input type="text" inputmode="numeric" id="localesComerciales" placeholder="2" autocomplete="off" /><small>Columna «Unidades» de esa misma línea</small></label>
+      <label class="campo"><span>Consumo comercial histórico</span><input type="text" inputmode="numeric" id="consumoComercialHistorico" placeholder="54.938" autocomplete="off" /><small>Aseo comercial del mes anterior menos su cargo fijo</small></label>
     </div>
 
     <h3 class="subtitulo">Valor unitario para el ajuste anual <span class="opcional">escenario C</span></h3>
@@ -150,6 +162,15 @@
   <!-- ================= Resultados ================= -->
   <section id="resultados" aria-live="polite"></section>
 
+  <!-- ================= Historial de facturas ================= -->
+  <details class="tarjeta desplegable-config" id="bloqueHistorial">
+    <summary>
+      <span class="resumen-titulo">Facturas del período y acuerdo del cargo fijo</span>
+      <span class="ayuda">Qué cambió en el aseo y por qué</span>
+    </summary>
+    <div id="detalleHistorial"></div>
+  </details>
+
   <!-- ================= Línea base ================= -->
   <details class="tarjeta desplegable-config" id="bloqueLineaBase">
     <summary>
@@ -171,7 +192,7 @@
       <li><strong>Si aumenta el consumo.</strong> Todo el incremento sobre la línea base lo asume el restaurante, siempre que residencial y odontología mantengan su consumo habitual.</li>
       <li><strong>Ajuste progresivo.</strong> Si el consumo sigue subiendo y se relaciona con la operación del restaurante, su participación aumenta gradualmente: 33,33% → 40% → 50% → 60% → 65% → 70%…</li>
       <li><strong>Si el consumo baja.</strong> El reparto sigue siendo proporcional. El restaurante no tiene valor mínimo fijo.</li>
-      <li><strong>Aseo.</strong> El componente residencial lo paga residencial. El comercial se reparte 65% restaurante / 35% odontología, y el incremento demostrable sobre el histórico lo asume el restaurante.</li>
+      <li><strong>Aseo.</strong> El componente residencial lo paga residencial. En el comercial, cada local paga su propio cargo fijo; el consumo por toneladas se reparte 65% restaurante / 35% odontología, y todo el aumento sobre el histórico lo asume el restaurante.</li>
       <li><strong>Iluminación y comunes.</strong> Los conceptos que benefician por igual a las tres partes se dividen en tercios.</li>
       <li><strong>Gastos propios.</strong> Multas, intereses, acuerdos de pago o reparaciones de una parte las asume esa parte.</li>
       <li><strong>Revisión semestral.</strong> Cada 6 meses, a petición de cualquiera de las partes, se revisan las facturas para decidir si los porcentajes siguen siendo justos.</li>
