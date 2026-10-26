@@ -113,20 +113,36 @@ prueba('Las facturas documentadas cuadran consigo mismas', () => {
   }
 });
 
-prueba('Octubre: cada local paga su cargo fijo y el aumento del consumo va al restaurante', () => {
+prueba('Octubre: cada local su cuota fija y todo el consumo repartido 35/65', () => {
   const aseo = bloque(calcular(facturaAseoOct, {}), 'aseo');
   assert.equal(aseo.total, 326892);
   assert.equal(aseo.cargoFijo.locales, 2);
   assert.equal(aseo.cargoFijo.odontologia, 71028);
   assert.equal(aseo.cargoFijo.restaurante, 71028);
   assert.equal(aseo.consumo.actual, 136178);
-  assert.equal(aseo.consumo.historico, 54938);
-  assert.equal(aseo.consumo.aumento, 81240);
-  // Consumo histórico 35/65 y todo el aumento al restaurante.
-  assert.equal(aseo.consumo.odontologia, 19228);
-  assert.equal(aseo.consumo.restaurante, 35710 + 81240);
-  assert.deepEqual(aseo.reparto, { residencial: 48658, odontologia: 90256, restaurante: 187978 });
+  assert.equal(aseo.consumo.odontologia, 47662);
+  assert.equal(aseo.consumo.restaurante, 88516);
+  assert.deepEqual(aseo.reparto, { residencial: 48658, odontologia: 118690, restaurante: 159544 });
   assert.equal(suma(aseo.reparto), 326892);
+});
+
+prueba('El aumento del consumo no se cuenta dos veces', () => {
+  const aseo = bloque(calcular(facturaAseoOct, {}), 'aseo');
+  const pesoRest = (aseo.consumo.restaurante / aseo.consumo.actual) * 100;
+  // El restaurante asume el 65% del consumo, no más.
+  assert.ok(Math.abs(pesoRest - 65) < 0.1, `el restaurante asume ${pesoRest.toFixed(1)}% del consumo`);
+  assert.equal(aseo.escenarios.some((e) => e.codigo === 'Aseo-A2'), true);
+});
+
+prueba('La regla extra del numeral 5 sigue disponible, pero apagada', () => {
+  const conRegla = bloque(calcular(facturaAseoOct, { incrementoAseoAlRestaurante: true }), 'aseo');
+  assert.equal(conRegla.consumo.odontologia, 19228);
+  assert.equal(conRegla.consumo.restaurante, 35710 + 81240);
+  assert.deepEqual(conRegla.reparto, { residencial: 48658, odontologia: 90256, restaurante: 187978 });
+  assert.equal(conRegla.escenarios.some((e) => e.codigo === 'Aseo-B'), true);
+  // Por defecto NO se aplica.
+  const porDefecto = bloque(calcular(facturaAseoOct, {}), 'aseo');
+  assert.equal(porDefecto.escenarios.some((e) => e.codigo === 'Aseo-B'), false);
 });
 
 prueba('El cargo fijo no se reparte 35/65', () => {
@@ -193,7 +209,7 @@ prueba('Gastos particulares van a quien los generó', () => {
   const p = bloque(r, 'particulares');
   assert.equal(p.reparto.odontologia, 50000);
   assert.equal(p.reparto.residencial, 0);
-  assert.equal(r.totales.odontologia, 45035 + 90256 + 5000 + 50000);
+  assert.equal(r.totales.odontologia, 45035 + 118690 + 5000 + 50000);
 });
 
 /* --------------------------- formulario unificado --------------------------- */

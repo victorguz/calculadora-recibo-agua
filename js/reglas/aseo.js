@@ -104,15 +104,17 @@ export function distribuirAseo(factura, config) {
     const [o, r] = repartir(Math.min(consumo, consumoHistorico), [pctOdo, pctRes]);
     consumoOdo = o;
     consumoRest = r + (consumo - Math.round(Math.min(consumo, consumoHistorico)));
+    const pesoRest = consumo > 0 ? ((consumoRest / consumo) * 100).toFixed(0) : pctRes;
     escenarios.push({
       codigo: 'Aseo-B',
-      numeral: 'Numeral 5',
+      numeral: 'Numeral 5 · regla adicional activada',
       tono: 'alerta',
-      titulo: 'El consumo de aseo aumentó y el aumento lo asume el restaurante',
+      titulo: 'Todo el aumento del consumo se le carga al restaurante',
       descripcion:
-        `El consumo comercial pasó de ${cop(consumoHistorico)} a ${cop(consumo)}: ` +
-        `${cop(aumentoConsumo)} más. El residencial mantiene su nivel y la odontología su tonelaje, ` +
-        `así que el histórico se reparte ${pctOdo}% / ${pctRes}% y todo el aumento lo asume el restaurante.`,
+        `Está activa la regla del numeral 5: el consumo histórico (${cop(consumoHistorico)}) se reparte ` +
+        `${pctOdo}% / ${pctRes}% y el aumento de ${cop(aumentoConsumo)} lo asume el restaurante completo. ` +
+        `Con esto el restaurante termina pagando el ${pesoRest}% del consumo, no el ${pctRes}%. ` +
+        `Si lo acordado es sólo el reparto ${pctOdo}/${pctRes}, desmarque la casilla.`,
     });
   } else {
     const [o, r] = repartir(consumo, [pctOdo, pctRes]);
@@ -123,12 +125,13 @@ export function distribuirAseo(factura, config) {
       escenarios.push({
         codigo: 'Aseo-A2',
         numeral: 'Numeral 4',
-        tono: 'alerta',
-        titulo: 'El consumo aumentó — reparto 35% / 65% sin atribuir el aumento',
+        tono: 'ok',
+        titulo: `El consumo aumentó — se reparte ${pctOdo}% / ${pctRes}% como se acordó`,
         descripcion:
-          `El consumo comercial subió ${cop(aumentoConsumo)} sobre el histórico, pero no se marcó que ` +
-          `haya evidencia de que venga del restaurante. Todo el consumo se reparte ${pctOdo}% / ${pctRes}%. ` +
-          `Si se demuestra el origen, marque la casilla y el aumento pasa completo al restaurante.`,
+          `El consumo comercial subió ${cop(aumentoConsumo)} sobre el histórico de ${cop(consumoHistorico)}. ` +
+          `Todo el consumo se reparte ${pctOdo}% / ${pctRes}%: la odontología asume ${cop(consumoOdo)} y el ` +
+          `restaurante ${cop(consumoRest)}. Ese ${pctRes}% ya recoge que el aumento viene del restaurante, ` +
+          `así que no se le vuelve a cargar aparte.`,
       });
     } else if (aumentoConsumo <= -1) {
       escenarios.push({

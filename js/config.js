@@ -40,8 +40,8 @@ export const ACUERDO_CARGO_FIJO = Object.freeze({
     'se divide 35/65 como estaba, sino que cada local paga el que le corresponde.',
   consecuencias: [
     'El cargo fijo comercial deja de repartirse: cada local comercial asume el suyo.',
-    'El consumo (la parte por toneladas) se sigue repartiendo 35% odontología / 65% restaurante.',
-    'Todo aumento del consumo sobre el histórico lo asume el restaurante, según el numeral 5.',
+    'Todo el consumo por toneladas se reparte 35% odontología / 65% restaurante.',
+    'Ese 65% ya recoge que el restaurante es quien genera el aumento, así que el aumento no se le vuelve a cargar aparte.',
   ],
 });
 
@@ -240,11 +240,14 @@ export const CONFIG_DEFAULT = Object.freeze({
   consumoHabitualDemostrado: true,
 
   /**
-   * Hay evidencia de que el incremento del consumo de aseo proviene de los
-   * residuos del restaurante. Numeral 5. Activo desde octubre de 2026: el
-   * residencial no se movió y la odontología sostiene su tonelaje histórico.
+   * Regla adicional del numeral 5: cargar TODO el aumento del consumo al
+   * restaurante, encima del 65% que ya le corresponde del consumo histórico.
+   *
+   * Apagada. El esquema acordado es más simple: cada local paga su cuota fija
+   * y todo el consumo se reparte 35/65. Ese 65% ya recoge que el restaurante
+   * es quien genera el aumento; aplicar las dos cosas lo contaría dos veces.
    */
-  incrementoAseoAlRestaurante: true,
+  incrementoAseoAlRestaurante: false,
 
   /**
    * Tarifas unitarias para el ajuste anual (escenario C). El valor base viene

@@ -27,8 +27,10 @@ asume el restaurante, siempre que residencial y odontología mantengan su consum
 
 Triple A se dio cuenta de que en el predio hay **dos locales comerciales** y empezó a cobrar una
 tarifa fija mensual por cada uno ($71.028). Por eso el cargo fijo ya **no se divide 35/65**: cada
-local paga el que le corresponde. Lo que se sigue repartiendo 35% / 65% es el consumo por
-toneladas, y todo el aumento de ese consumo sobre el histórico lo asume el restaurante.
+local paga el que le corresponde. Todo el resto --el consumo por toneladas-- se reparte 35% / 65%.
+
+Ese 65% ya recoge que el restaurante es quien genera el aumento, así que el aumento **no se le
+vuelve a cargar aparte**: por tonelaje el restaurante aporta el 61%, y ya asume el 65%.
 
 | Período | Residencial | Comercial | Cargo fijo | Consumo | Ton. comerciales | Total |
 |---|---:|---:|---:|---:|---:|---:|
@@ -44,8 +46,8 @@ Con la factura de octubre el aseo comercial queda así:
 
 | | Cargo fijo | Consumo | **Total** |
 |---|---:|---:|---:|
-| 🦷 Odontología | $71.028 | $19.228 | **$90.256** |
-| 🍽️ Restaurante | $71.028 | $116.950 | **$187.978** |
+| 🦷 Odontología | $71.028 | $47.662 | **$118.690** |
+| 🍽️ Restaurante | $71.028 | $88.516 | **$159.544** |
 
 Las tres facturas y el texto del acuerdo están en `js/config.js` (`FACTURAS` y
 `ACUERDO_CARGO_FIJO`) y se consultan en la app bajo *Facturas del período y acuerdo del cargo fijo*.
@@ -92,7 +94,7 @@ Precargado en el ajuste anual (escenario C):
 | D | Acueducto + alcantarillado | La revisión semestral elevó la participación del restaurante por encima del 33,33%. |
 | Aseo CF / CF1 | Aseo | Cada local comercial paga su propio cargo fijo (CF1: la factura sólo cobra uno). |
 | Aseo A / A2 / A3 | Aseo | Reparto del consumo comercial 35% odontología / 65% restaurante. |
-| Aseo B | Aseo | El consumo de aseo aumentó y el aumento lo asume completo el restaurante. |
+| Aseo B | Aseo | Regla adicional del numeral 5, apagada por defecto: carga todo el aumento al restaurante además del 65%. |
 | Aseo R | Aseo | El componente residencial se apartó más de $1.000 de su referencia; lo asume la unidad residencial. |
 | Comunes | Iluminación y comunes | Se dividen en partes iguales. |
 | Particulares | Otros conceptos particulares | Multas, intereses o acuerdos de pago los asume quien los generó. |
